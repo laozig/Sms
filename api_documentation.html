@@ -1,0 +1,1986 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>接码平台API文档</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --accent-color: #f39c12;
+            --text-color: #333;
+            --light-gray: #f5f5f5;
+            --border-color: #ddd;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --code-bg: #f8f8f8;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #fff;
+            padding-top: 60px;
+        }
+        
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        .container {
+            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 导航栏样式 */
+        header {
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 15px 0;
+        }
+        
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        /* 侧边栏样式 */
+        .sidebar {
+            width: 260px;
+            padding-right: 20px;
+            position: sticky;
+            top: 80px;
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+        }
+        
+        .sidebar-nav {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .nav-section {
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .nav-section:last-child {
+            border-bottom: none;
+        }
+        
+        .nav-section-title {
+            padding: 12px 15px;
+            font-weight: 600;
+            color: var(--text-color);
+            background-color: var(--light-gray);
+            cursor: pointer;
+        }
+        
+        .nav-links {
+            padding: 5px 0;
+        }
+        
+        .nav-link {
+            padding: 8px 15px 8px 25px;
+            display: block;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .nav-link:hover {
+            background-color: var(--light-gray);
+            text-decoration: none;
+        }
+        
+        .nav-link.active {
+            border-left: 3px solid var(--primary-color);
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        /* 主要内容区域 */
+        .content {
+            flex: 1;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .section:last-child {
+            border-bottom: none;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            color: #222;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        
+        h1 {
+            font-size: 2em;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        h2 {
+            font-size: 1.5em;
+            margin-top: 40px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        h3 {
+            font-size: 1.3em;
+            margin-top: 25px;
+        }
+        
+        p {
+            margin-bottom: 16px;
+        }
+        
+        ul, ol {
+            margin-bottom: 16px;
+            padding-left: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        /* API卡片样式 */
+        .api-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .api-card-header {
+            padding: 15px;
+            background-color: var(--light-gray);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .api-method {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.8em;
+            margin-right: 10px;
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .api-path {
+            font-weight: 500;
+            font-family: monospace;
+            font-size: 1.1em;
+        }
+        
+        .api-card-body {
+            padding: 15px;
+        }
+        
+        .api-section {
+            margin-bottom: 15px;
+        }
+        
+        .api-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .api-section-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            color: #666;
+        }
+        
+        /* 表格样式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+        }
+        
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        th {
+            background-color: var(--light-gray);
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background-color: var(--light-gray);
+        }
+        
+        /* 代码样式 */
+        pre {
+            background-color: var(--code-bg);
+            border-radius: 6px;
+            padding: 15px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+        }
+        
+        code {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            font-size: 0.9em;
+        }
+        
+        .copy-btn {
+            background-color: var(--light-gray);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 0.8em;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .copy-btn:hover {
+            background-color: var(--border-color);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                position: static;
+                height: auto;
+                margin-bottom: 20px;
+            }
+            
+            .content {
+                width: 100%;
+            }
+        }
+
+        /* 标签样式 */
+        .tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            font-weight: 500;
+            margin-right: 5px;
+        }
+
+        .tag-required {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .tag-optional {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .param-name {
+            font-family: monospace;
+            font-weight: 600;
+        }
+
+        /* 返回状态码样式 */
+        .status-code {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+            margin-right: 5px;
+            font-size: 0.8em;
+        }
+
+        .status-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .status-error {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .status-warning {
+            background-color: var(--accent-color);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="logo">接码平台API文档</div>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">概述</div>
+                    <div class="nav-links">
+                        <a href="#introduction" class="nav-link active">通用说明</a>
+                        <a href="#status-codes" class="nav-link">状态码说明</a>
+                        <a href="#notes" class="nav-link">注意事项</a>
+                    </div>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">用户认证</div>
+                    <div class="nav-links">
+                        <a href="#auth-register" class="nav-link">注册</a>
+                        <a href="#auth-login" class="nav-link">登录</a>
+                        <a href="#auth-profile" class="nav-link">获取个人资料</a>
+                        <a href="#auth-update-profile" class="nav-link">修改个人资料</a>
+                        <a href="#auth-change-password" class="nav-link">修改密码</a>
+                        <a href="#auth-logout" class="nav-link">注销/刷新令牌</a>
+                        <a href="#auth-api-key" class="nav-link">设置API密钥</a>
+                    </div>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">项目管理</div>
+                    <div class="nav-links">
+                        <a href="#projects-list" class="nav-link">获取项目列表</a>
+                        <a href="#projects-detail" class="nav-link">查询项目详情</a>
+                        <a href="#projects-search" class="nav-link">搜索项目</a>
+                        <a href="#projects-favorite" class="nav-link">收藏/取消收藏项目</a>
+                        <a href="#projects-favorites" class="nav-link">获取收藏的项目列表</a>
+                        <a href="#projects-exclusive" class="nav-link">获取专属对接的项目列表</a>
+                        <a href="#projects-all-exclusive" class="nav-link">获取所有可加入的专属项目</a>
+                        <a href="#projects-join-exclusive" class="nav-link">加入专属对接</a>
+                    </div>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">号码管理</div>
+                    <div class="nav-links">
+                        <a href="#numbers-get" class="nav-link">取号</a>
+                        <a href="#numbers-batch-get" class="nav-link">批量取号</a>
+                        <a href="#numbers-sms" class="nav-link">获取短信</a>
+                        <a href="#numbers-sms-submit" class="nav-link">提交短信</a>
+                        <a href="#numbers-release" class="nav-link">释放号码</a>
+                        <a href="#numbers-batch-release" class="nav-link">批量释放号码</a>
+                        <a href="#numbers-list" class="nav-link">获取号码列表</a>
+                        <a href="#numbers-export" class="nav-link">导出号码记录</a>
+                        <a href="#numbers-blacklist-add" class="nav-link">加入黑名单</a>
+                        <a href="#numbers-blacklist" class="nav-link">查询黑名单列表</a>
+                        <a href="#numbers-blacklist-remove" class="nav-link">移除黑名单</a>
+                    </div>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">账户管理</div>
+                    <div class="nav-links">
+                        <a href="#account-balance" class="nav-link">查询余额</a>
+                        <a href="#account-create-order" class="nav-link">创建充值订单</a>
+                        <a href="#account-order-status" class="nav-link">查询充值订单状态</a>
+                        <a href="#account-transactions" class="nav-link">查询交易记录</a>
+                    </div>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">统计数据</div>
+                    <div class="nav-links">
+                        <a href="#statistics" class="nav-link">获取统计数据</a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="content">
+            <!-- 概述部分 -->
+            <section class="section" id="introduction">
+                <h1>接码平台API文档</h1>
+                <h2>通用说明</h2>
+                <p>所有API支持GET和POST请求方法，认证令牌可通过以下方式提供：</p>
+                <ol>
+                    <li>URL参数: <code>?token=您的令牌</code></li>
+                    <li>POST请求体JSON: <code>{"token": "您的令牌"}</code></li>
+                    <li>请求头: <code>Authorization: Bearer 您的令牌</code>（优先级最低）</li>
+                </ol>
+            </section>
+
+            <!-- 状态码部分 -->
+            <section class="section" id="status-codes">
+                <h2>状态码说明</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>状态码</th>
+                            <th>描述</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="status-code status-success">200</span></td>
+                            <td>请求成功</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-code status-success">201</span></td>
+                            <td>创建成功</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-code status-error">400</span></td>
+                            <td>请求参数错误</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-code status-error">401</span></td>
+                            <td>认证失败</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-code status-error">403</span></td>
+                            <td>权限不足</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-code status-error">404</span></td>
+                            <td>资源不存在</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-code status-warning">429</span></td>
+                            <td>请求过于频繁</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-code status-error">500</span></td>
+                            <td>服务器内部错误</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- 注意事项部分 -->
+            <section class="section" id="notes">
+                <h2>注意事项</h2>
+                <ul>
+                    <li>所有API都有频率限制，请勿频繁请求</li>
+                    <li>取号后需要在15分钟内获取验证码，否则号码将自动释放</li>
+                    <li>所有时间默认使用UTC时间，特别注明的除外</li>
+                    <li>余额不足时，取号将失败</li>
+                    <li>API密钥应妥善保管，请勿泄露</li>
+                </ul>
+            </section>
+
+            <!-- 用户认证部分 -->
+            <section class="section">
+                <h2>用户认证</h2>
+                
+                <!-- 注册 -->
+                <div class="api-card" id="auth-register">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/auth/register</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/auth/register')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>注册新用户并获取认证令牌</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">username</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>用户名</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">email</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>邮箱</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">password</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>密码</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应结果</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">字段名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="65%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/auth/register?username=test_user&email=test@example.com&password=password123</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "message": "用户注册成功",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 登录 -->
+                <div class="api-card" id="auth-login">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/auth/login</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/auth/login')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>用户登录并获取认证令牌</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">username</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>用户名</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">password</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>密码</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应结果</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">字段名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="65%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/auth/login?username=test_user&password=password123</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "message": "登录成功",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 获取个人资料 -->
+                <div class="api-card" id="auth-profile">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/auth/profile</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/auth/profile')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>获取当前登录用户的个人资料</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应结果</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">字段名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="65%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">user</span></td>
+                                        <td>Object</td>
+                                        <td>用户信息对象</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/auth/profile?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "user": {
+    "id": 2,
+    "username": "test_user",
+    "email": "test@example.com",
+    "is_admin": false,
+    "balance": 100.0,
+    "created_at": "2025-01-01T10:00:00Z",
+    "last_login": "2025-01-02T15:30:00Z"
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 修改个人资料 -->
+                <div class="api-card" id="auth-update-profile">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/auth/update-profile</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/auth/update-profile')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>修改当前登录用户的个人资料</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">email</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-optional">可选</span></td>
+                                        <td>新邮箱</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">password</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-optional">可选</span></td>
+                                        <td>新密码</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">avatar</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-optional">可选</span></td>
+                                        <td>头像URL</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/auth/update-profile?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&email=new_email@example.com</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "message": "个人资料更新成功",
+  "user": {
+    "id": 2,
+    "username": "test_user",
+    "email": "new_email@example.com",
+    "is_admin": false,
+    "balance": 100.0,
+    "created_at": "2025-01-01T10:00:00Z",
+    "last_login": "2025-01-02T15:30:00Z"
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 修改密码 -->
+                <div class="api-card" id="auth-change-password">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/auth/change-password</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/auth/change-password')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>修改当前登录用户的密码</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">old_password</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>旧密码</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">new_password</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>新密码</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/auth/change-password?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&old_password=password123&new_password=newpassword123</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "message": "密码修改成功"
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 注销/刷新令牌 -->
+                <div class="api-card" id="auth-logout">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/auth/logout</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/auth/logout')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>注销当前登录令牌或刷新令牌</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/auth/logout?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "message": "登出成功"
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 设置API密钥 -->
+                <div class="api-card" id="auth-api-key">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/auth/api-key</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/auth/api-key')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>生成或撤销API密钥</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">action</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>操作类型(generate, revoke)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/auth/api-key?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&action=generate</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "message": "API密钥生成成功",
+  "api_key": "sk-abcdefghijklmnopqrstuvwxyz123456"
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 项目管理部分 -->
+            <section class="section">
+                <h2>项目管理</h2>
+                
+                <!-- 获取项目列表 -->
+                <div class="api-card" id="projects-list">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/projects</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/projects')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>获取可用项目列表</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">page</span></td>
+                                        <td>Integer</td>
+                                        <td><span class="tag tag-optional">可选</span></td>
+                                        <td>页码（默认1）</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">per_page</span></td>
+                                        <td>Integer</td>
+                                        <td><span class="tag tag-optional">可选</span></td>
+                                        <td>每页数量（默认10）</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">keyword</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-optional">可选</span></td>
+                                        <td>搜索关键词</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/projects?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&page=1&per_page=10</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "page": 1,
+  "per_page": 10,
+  "total": 30,
+  "total_pages": 3,
+  "items": [
+    {
+      "id": 1,
+      "code": "wechat_login",
+      "name": "微信登录",
+      "description": "用于微信账号登录验证",
+      "price": 0.5,
+      "success_rate": 98.5,
+      "is_favorite": true,
+      "is_exclusive": false
+    },
+    {
+      "id": 2,
+      "code": "alipay_bind",
+      "name": "支付宝绑定",
+      "description": "用于支付宝账号绑定验证",
+      "price": 0.6,
+      "success_rate": 97.2,
+      "is_favorite": false,
+      "is_exclusive": false
+    }
+    // ... 更多项目
+  ]
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 查询项目详情 -->
+                <div class="api-card" id="projects-detail">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/projects/{project_id}</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/projects/{project_id}')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>查询指定项目的详细信息</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">project_id</span></td>
+                                        <td>Integer</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>项目ID(URL路径参数)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/projects/1?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "project": {
+    "id": 1,
+    "code": "wechat_login",
+    "name": "微信登录",
+    "description": "用于微信账号登录验证",
+    "price": 0.5,
+    "success_rate": 98.5,
+    "is_favorite": true,
+    "is_exclusive": false,
+    "created_at": "2025-01-01T10:00:00Z",
+    "updated_at": "2025-01-02T15:30:00Z",
+    "stats": {
+      "total_requests": 1500,
+      "success_count": 1450,
+      "fail_count": 50,
+      "last_week_usage": 120
+    }
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 号码管理部分 -->
+            <section class="section">
+                <h2>号码管理</h2>
+                
+                <!-- 取号 -->
+                <div class="api-card" id="numbers-get">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/numbers/get</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/numbers/get')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>获取指定项目的手机号</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">project_code</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>项目代码</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/numbers/get?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&project_code=wechat_login</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "phone_number": {
+    "number": "13800138000",
+    "request_id": "req_12345abc",
+    "project_code": "wechat_login",
+    "project_name": "微信登录",
+    "expires_at": "2025-01-02T16:30:00Z",
+    "sms_link": "/api/numbers/sms/req_12345abc",
+    "release_link": "/api/numbers/release/req_12345abc"
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 批量取号 -->
+                <div class="api-card" id="numbers-batch-get">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/numbers/batch-get</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/numbers/batch-get')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>批量获取指定项目的手机号</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">project_code</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>项目代码</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">count</span></td>
+                                        <td>Integer</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>需要获取的号码数量(1-10)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/numbers/batch-get?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&project_code=wechat_login&count=3</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "phone_numbers": [
+    {
+      "number": "13800138000",
+      "request_id": "req_12345abc",
+      "project_code": "wechat_login",
+      "project_name": "微信登录",
+      "expires_at": "2025-01-02T16:30:00Z"
+    },
+    {
+      "number": "13900139000",
+      "request_id": "req_67890def",
+      "project_code": "wechat_login",
+      "project_name": "微信登录",
+      "expires_at": "2025-01-02T16:30:00Z"
+    },
+    {
+      "number": "13700137000",
+      "request_id": "req_abcdef123",
+      "project_code": "wechat_login",
+      "project_name": "微信登录",
+      "expires_at": "2025-01-02T16:30:00Z"
+    }
+  ],
+  "batch_release_link": "/api/numbers/batch-release?request_ids=req_12345abc,req_67890def,req_abcdef123"
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 获取短信 -->
+                <div class="api-card" id="numbers-sms">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/numbers/sms/{request_id}</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/numbers/sms/{request_id}')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>获取指定请求ID的短信验证码</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">request_id</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>取号请求ID(URL路径参数)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/numbers/sms/req_12345abc?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "sms": {
+    "number": "13800138000",
+    "request_id": "req_12345abc",
+    "sms_code": "123456",
+    "sms_content": "【微信】验证码123456，用于微信账号登录，5分钟内有效。",
+    "received_at": "2025-01-02T16:00:00Z"
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 释放号码 -->
+                <div class="api-card" id="numbers-release">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/numbers/release/{request_id}</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/numbers/release/{request_id}')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>释放指定请求ID的手机号</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">request_id</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>取号请求ID(URL路径参数)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/numbers/release/req_12345abc?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "message": "号码已成功释放"
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 批量释放号码 -->
+                <div class="api-card" id="numbers-batch-release">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/numbers/batch-release</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/numbers/batch-release')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>批量释放多个请求ID的手机号</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">request_ids</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>请求ID列表，用逗号分隔</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/numbers/batch-release?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&request_ids=req_12345abc,req_67890def</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "message": "成功释放2个号码",
+  "details": {
+    "success_count": 2,
+    "failed_count": 0
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 账户管理部分 -->
+            <section class="section">
+                <h2>账户管理</h2>
+                
+                <!-- 查询余额 -->
+                <div class="api-card" id="account-balance">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/account/balance</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/account/balance')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>查询当前用户账户余额</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/account/balance?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "balance": 125.50,
+  "currency": "CNY"
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 创建充值订单 -->
+                <div class="api-card" id="account-create-order">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/account/create-order</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/account/create-order')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>创建账户充值订单</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">amount</span></td>
+                                        <td>Number</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>充值金额</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">payment_method</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>支付方式（如：alipay, wechat, card）</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">coupon_code</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-optional">可选</span></td>
+                                        <td>优惠券代码</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/account/create-order?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&amount=100&payment_method=alipay</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "order": {
+    "order_id": "order_12345abc",
+    "amount": 100.0,
+    "payment_method": "alipay",
+    "status": "pending",
+    "created_at": "2025-01-02T16:00:00Z",
+    "expires_at": "2025-01-02T16:30:00Z"
+  },
+  "payment_url": "https://example.com/pay/alipay?order_id=order_12345abc"
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 查询充值订单状态 -->
+                <div class="api-card" id="account-order-status">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/account/order-status/{order_id}</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/account/order-status/{order_id}')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>查询充值订单状态</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">order_id</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>订单ID(URL路径参数)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/account/order-status/order_12345abc?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "order": {
+    "order_id": "order_12345abc",
+    "amount": 100.0,
+    "payment_method": "alipay",
+    "status": "completed",
+    "created_at": "2025-01-02T16:00:00Z",
+    "paid_at": "2025-01-02T16:05:00Z"
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 查询交易记录 -->
+                <div class="api-card" id="account-transactions">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/account/transactions</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/account/transactions')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>查询账户交易记录</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">page</span></td>
+                                        <td>Integer</td>
+                                        <td><span class="tag tag-optional">可选</span></td>
+                                        <td>页码（默认1）</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">per_page</span></td>
+                                        <td>Integer</td>
+                                        <td><span class="tag tag-optional">可选</span></td>
+                                        <td>每页数量（默认10）</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">start_date</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-optional">可选</span></td>
+                                        <td>开始日期(YYYY-MM-DD)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">end_date</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-optional">可选</span></td>
+                                        <td>结束日期(YYYY-MM-DD)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">type</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-optional">可选</span></td>
+                                        <td>交易类型过滤(recharge, consume)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/account/transactions?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&page=1&per_page=10</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "page": 1,
+  "per_page": 10,
+  "total": 25,
+  "total_pages": 3,
+  "items": [
+    {
+      "id": 123,
+      "type": "recharge",
+      "amount": 100.0,
+      "balance_after": 200.0,
+      "description": "支付宝充值",
+      "created_at": "2025-01-02T16:05:00Z",
+      "reference_id": "order_12345abc"
+    },
+    {
+      "id": 122,
+      "type": "consume",
+      "amount": -0.5,
+      "balance_after": 100.0,
+      "description": "微信登录验证码",
+      "created_at": "2025-01-01T12:30:00Z",
+      "reference_id": "req_12345abc"
+    }
+    // ... 更多交易记录
+  ]
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 统计数据部分 -->
+            <section class="section">
+                <h2>统计数据</h2>
+                
+                <!-- 获取统计数据 -->
+                <div class="api-card" id="statistics">
+                    <div class="api-card-header">
+                        <div>
+                            <span class="api-method">GET/POST</span>
+                            <span class="api-path">/api/statistics</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('/api/statistics')">复制</button>
+                    </div>
+                    <div class="api-card-body">
+                        <div class="api-section">
+                            <div class="api-section-title">接口描述</div>
+                            <p>获取用户使用统计数据</p>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求参数</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="20%">参数名</th>
+                                        <th width="15%">类型</th>
+                                        <th width="15%">必填</th>
+                                        <th width="50%">描述</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">token</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>认证令牌</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">type</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>统计类型(daily, weekly, monthly)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">start_date</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>开始日期(YYYY-MM-DD)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">end_date</span></td>
+                                        <td>String</td>
+                                        <td><span class="tag tag-required">必填</span></td>
+                                        <td>结束日期(YYYY-MM-DD)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">请求示例</div>
+                            <pre><code>GET http://localhost:5000/api/statistics?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&type=monthly&start_date=2025-01-01&end_date=2025-05-01</code></pre>
+                        </div>
+                        <div class="api-section">
+                            <div class="api-section-title">响应示例</div>
+                            <pre><code>{
+  "status": "success",
+  "type": "monthly",
+  "stats": [
+    {
+      "period": "2025-01",
+      "requests_count": 120,
+      "success_rate": 98.3,
+      "cost": 60.0
+    },
+    {
+      "period": "2025-02",
+      "requests_count": 150,
+      "success_rate": 97.8,
+      "cost": 75.0
+    },
+    {
+      "period": "2025-03",
+      "requests_count": 200,
+      "success_rate": 99.1,
+      "cost": 100.0
+    },
+    {
+      "period": "2025-04",
+      "requests_count": 180,
+      "success_rate": 98.5,
+      "cost": 90.0
+    }
+  ],
+  "summary": {
+    "total_requests": 650,
+    "average_success_rate": 98.4,
+    "total_cost": 325.0
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // 导航处理
+        document.addEventListener('DOMContentLoaded', function() {
+            // 平滑滚动到锚点
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // 移除所有active类
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    // 为当前点击的链接添加active类
+                    this.classList.add('active');
+                    
+                    // 获取目标元素
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    
+                    if (targetElement) {
+                        // 平滑滚动
+                        targetElement.scrollIntoView({ 
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+            
+            // 监听滚动，更新活动导航项
+            let isScrolling = false;
+            window.addEventListener('scroll', function() {
+                if (!isScrolling) {
+                    window.requestAnimationFrame(function() {
+                        highlightCurrentSection();
+                        isScrolling = false;
+                    });
+                    isScrolling = true;
+                }
+            });
+            
+            // 初次加载时高亮当前部分
+            highlightCurrentSection();
+            
+            // 复制到剪贴板功能
+            window.copyToClipboard = function(text) {
+                const tempInput = document.createElement('input');
+                tempInput.value = text;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                
+                // 显示复制成功提示
+                const copyBtn = event.target;
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '已复制!';
+                copyBtn.style.backgroundColor = 'var(--success-color)';
+                copyBtn.style.color = 'white';
+                
+                setTimeout(function() {
+                    copyBtn.textContent = originalText;
+                    copyBtn.style.backgroundColor = '';
+                    copyBtn.style.color = '';
+                }, 2000);
+            };
+        });
+        
+        // 高亮当前可见部分
+        function highlightCurrentSection() {
+            const sections = document.querySelectorAll('.api-card');
+            let currentSection = null;
+            let minDistance = Number.MAX_VALUE;
+            
+            const scrollPosition = window.scrollY + 100; // 添加一些偏移
+            
+            sections.forEach(section => {
+                const distance = Math.abs(section.offsetTop - scrollPosition);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    currentSection = section;
+                }
+            });
+            
+            if (currentSection) {
+                const currentId = currentSection.id;
+                const navLinks = document.querySelectorAll('.nav-link');
+                
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === '#' + currentId) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html> 
