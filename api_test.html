@@ -1,4 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS平台 API测试工具</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- highlight.js 语法高亮 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+    <!-- 自定义样式 -->
+    <style>
+        .required-field::after {
+            content: " *";
+            color: red;
+        }
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            display: none;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .api-description {
+            color: #6c757d;
+            font-style: italic;
+        }
+        .code-block {
+            background-color: #f8f9fa;
+            border: 1px solid #eaecef;
+            border-radius: 3px;
+            padding: 16px;
+            font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+            font-size: 85%;
+            margin-bottom: 16px;
+            overflow-x: auto;
+        }
+        .method-badge {
+            font-size: 12px;
+            padding: 3px 6px;
+            border-radius: 3px;
+            margin-right: 8px;
+        }
+        .get-method { background-color: #61affe; color: white; }
+        .post-method { background-color: #49cc90; color: white; }
+        .put-method { background-color: #fca130; color: white; }
+        .delete-method { background-color: #f93e3e; color: white; }
+        #requestHistory {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .nav-link.active {
+            font-weight: bold;
+        }
+        .history-item {
+            cursor: pointer;
+        }
+        .history-item:hover {
+            background-color: #f8f9fa;
+        }
+        .api-test-report {
+            margin-top: 20px;
+        }
+        .test-result-success {
+            color: #198754;
+        }
+        .test-result-failed {
+            color: #dc3545;
+        }
+        .hljs {
+            background-color: #f8f9fa !important;
+            border-radius: 4px;
+            padding: 1rem !important;
+        }
+        .badge-counter {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 10px;
+        }
+        .formatted-json {
+            line-height: 1.5;
+        }
+        .api-menu {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .api-category-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        /* 暗黑模式支持 */
+        .dark-mode {
+            background-color: #212529;
+            color: #f8f9fa;
+        }
+        .dark-mode .card {
+            background-color: #343a40;
+            color: #f8f9fa;
+        }
+        .dark-mode .card-header {
+            background-color: #495057;
+        }
+        .dark-mode pre, .dark-mode .code-block {
+            background-color: #343a40 !important;
+            color: #f8f9fa;
+        }
+        .dark-mode .form-control, .dark-mode .form-select {
+            background-color: #343a40;
+            color: #f8f9fa;
+            border-color: #495057;
+        }
+        .dark-mode .modal-content {
+            background-color: #343a40;
+            color: #f8f9fa;
+        }
+        #darkModeToggle {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载指示器 -->
+    <div id="loading">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">加载中...</span>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="container py-4">
+        <h1 class="mb-4 text-center">SMS平台 API测试工具</h1>
+        <div class="text-end mb-2">
+            <button id="runAllTests" class="btn btn-outline-primary btn-sm me-2">
+                <i class="fas fa-play-circle me-1"></i>运行全部API测试
+            </button>
+            <span id="darkModeToggle" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-moon"></i>
+            </span>
+        </div>
+        
+        <!-- 使用说明部分 -->
+        <div class="card mb-4" id="apiDocs">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-book me-2"></i>使用说明
+                <button class="btn btn-sm btn-light float-end" type="button" data-bs-toggle="collapse" data-bs-target="#apiDocsContent">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="card-body collapse" id="apiDocsContent">
+                <ul class="nav nav-tabs mb-3" id="docsTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">概述</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="auth-tab" data-bs-toggle="tab" data-bs-target="#auth-doc" type="button" role="tab">认证说明</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="api-format-tab" data-bs-toggle="tab" data-bs-target="#api-format" type="button" role="tab">API格式</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="offline-mode-tab" data-bs-toggle="tab" data-bs-target="#offline-mode-doc" type="button" role="tab">离线模式</button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="docsTabsContent">
+                    <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                        <h5>概述</h5>
+                        <p>SMS平台API测试工具可以帮助您快速测试和验证接口功能。提供以下特性：</p>
+                        <ul>
+                            <li>支持离线模式和在线模式</li>
+                            <li>支持所有主要HTTP方法（GET、POST、PUT、DELETE）</li>
+                            <li>自动保存请求历史</li>
+                            <li>内置模拟响应数据</li>
+                            <li>适用于前端开发和API调试</li>
+                        </ul>
+                        <p>您可以通过设置服务器地址来连接到真实环境，或者开启离线模式使用模拟数据。</p>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="auth-doc" role="tabpanel">
+                        <h5>认证说明</h5>
+                        <p>所有API请求需要认证才能访问。认证流程如下：</p>
+                        <ol>
+                            <li>通过登录/注册获取访问令牌(token)</li>
+                            <li>系统会自动将token添加到所有API请求中</li>
+                            <li>令牌有效期通常为24小时</li>
+                        </ol>
+                        <p>示例登录请求：</p>
+                        <div class="code-block">
+                            <span class="method-badge post-method">POST</span>/api/auth/login<br>
+                            参数：<br>
+                            {<br>
+                            &nbsp;&nbsp;"username": "your_username",<br>
+                            &nbsp;&nbsp;"password": "your_password"<br>
+                            }
+                        </div>
+                        <p>响应格式：</p>
+                        <div class="code-block">
+                            {<br>
+                            &nbsp;&nbsp;"message": "登录成功",<br>
+                            &nbsp;&nbsp;"token": "eyJhbGciOiJIUzI1NiIsInR5...",<br>
+                            &nbsp;&nbsp;"user": {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;"id": 1,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;"username": "admin",<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;// 其他用户信息<br>
+                            &nbsp;&nbsp;}<br>
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="api-format" role="tabpanel">
+                        <h5>API格式</h5>
+                        <p>所有API遵循以下格式规范：</p>
+                        
+                        <h6>请求格式</h6>
+                        <ul>
+                            <li>URL格式：<code>{base_url}/api/{resource}/{action}</code></li>
+                            <li>认证方式：请求参数中包含token</li>
+                            <li>内容类型：通常为application/json</li>
+                        </ul>
+                        
+                        <h6>响应格式</h6>
+                        <div class="code-block">
+                            {<br>
+                            &nbsp;&nbsp;// 成功响应<br>
+                            &nbsp;&nbsp;"message": "操作成功消息",<br>
+                            &nbsp;&nbsp;"data": { ... } // 响应数据<br>
+                            }<br><br>
+                            
+                            {<br>
+                            &nbsp;&nbsp;// 错误响应<br>
+                            &nbsp;&nbsp;"error": "错误类型",<br>
+                            &nbsp;&nbsp;"message": "错误详细信息"<br>
+                            }
+                        </div>
+                        
+                        <h6>HTTP方法使用规范</h6>
+                        <ul>
+                            <li><strong>GET</strong>：获取资源</li>
+                            <li><strong>POST</strong>：创建资源</li>
+                            <li><strong>PUT</strong>：完整更新资源</li>
+                            <li><strong>DELETE</strong>：删除资源</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="offline-mode-doc" role="tabpanel">
+                        <h5>离线模式</h5>
+                        <p>离线模式允许在没有实际服务器的情况下测试API功能。启用方法：</p>
+                        <ol>
+                            <li>在"API服务器配置"卡片中打开"离线测试模式"开关</li>
+                            <li>系统将使用内置的模拟数据响应所有API请求</li>
+                            <li>您会以测试用户身份自动登录</li>
+                        </ol>
+                        <p>离线模式对于以下场景特别有用：</p>
+                        <ul>
+                            <li>前端开发和集成测试</li>
+                            <li>演示系统功能</li>
+                            <li>在没有后端环境的情况下开发</li>
+                        </ul>
+                        <p>注意：离线模式下的所有数据都是模拟的，不会真正修改数据库或产生实际效果。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 历史记录模块 -->
+        <div class="card mb-4 d-none" id="historyPanel">
+            <div class="card-header bg-secondary text-white">
+                <i class="fas fa-history me-2"></i>请求历史
+                <button class="btn btn-sm btn-light float-end" type="button" data-bs-toggle="collapse" data-bs-target="#historyContent">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="card-body collapse" id="historyContent">
+                <div id="requestHistory" class="list-group">
+                    <!-- 历史记录将动态添加 -->
+                    <p class="text-muted">暂无历史记录</p>
+                </div>
+                <div class="text-end mt-2">
+                    <button id="clearHistory" class="btn btn-sm btn-outline-danger">
+                        <i class="fas fa-trash me-1"></i>清空历史
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 认证卡片 -->
+        <div class="card mb-4" id="authCard">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-lock me-2"></i>认证
+            </div>
+            <div class="card-body">
+                <!-- 选项卡切换 -->
+                <ul class="nav nav-tabs mb-3" id="authTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab" aria-controls="login" aria-selected="true">登录</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab" aria-controls="register" aria-selected="false">注册</button>
+                    </li>
+                </ul>
+                
+                <!-- 选项卡内容 -->
+                <div class="tab-content" id="authTabsContent">
+                    <!-- 登录选项卡 -->
+                    <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">用户名</label>
+                                <input type="text" class="form-control" id="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">密码</label>
+                                <input type="password" class="form-control" id="password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">登录</button>
+                        </form>
+                    </div>
+                    
+                    <!-- 注册选项卡 -->
+                    <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
+                        <form id="registerForm">
+                            <div class="mb-3">
+                                <label for="regUsername" class="form-label">用户名</label>
+                                <input type="text" class="form-control" id="regUsername" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="regEmail" class="form-label">电子邮箱</label>
+                                <input type="email" class="form-control" id="regEmail" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="regPassword" class="form-label">密码</label>
+                                <input type="password" class="form-control" id="regPassword" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">注册</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 用户信息卡片 -->
+        <div class="card mb-4 d-none" id="userInfoPanel">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-user me-2"></i>用户信息
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <p class="mb-1"><strong>用户名</strong></p>
+                        <p id="usernameInfo">-</p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="mb-1"><strong>电子邮箱</strong></p>
+                        <p id="emailInfo">-</p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="mb-1"><strong>账户余额</strong></p>
+                        <p><span id="balanceInfo">0.00</span> 元</p>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <button id="clearToken" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i>退出登录
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- API测试面板 -->
+        <div class="d-none" id="apiTestPanel">
+            <!-- API测试报告 -->
+            <div class="card mb-4 d-none" id="testReportPanel">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-clipboard-check me-2"></i>API测试报告
+                    <button class="btn btn-sm btn-light float-end" id="exportReport">
+                        <i class="fas fa-file-export me-1"></i>导出
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title" id="totalTestCount">0</h5>
+                                    <p class="card-text">总计测试</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center bg-success text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title" id="passedTestCount">0</h5>
+                                    <p class="card-text">通过</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center bg-danger text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title" id="failedTestCount">0</h5>
+                                    <p class="card-text">失败</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center bg-warning text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title" id="avgResponseTime">0ms</h5>
+                                    <p class="card-text">平均响应时间</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="api-test-report">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>API名称</th>
+                                    <th>端点</th>
+                                    <th>方法</th>
+                                    <th>响应状态</th>
+                                    <th>响应时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="testResultsTable">
+                                <!-- 测试结果将在这里显示 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="row">
+                <!-- 用户管理API -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100" id="user-apis"></div>
+                </div>
+                
+                <!-- 项目管理API -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100" id="project-apis"></div>
+                </div>
+                
+                <!-- 号码管理API -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100" id="number-apis"></div>
+                </div>
+                
+                <!-- 账户管理API -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100" id="account-apis"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 结果模态框 -->
+    <div class="modal fade" id="resultModal" tabindex="-1" aria-labelledby="resultModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resultModalLabel">API响应</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <pre><code class="language-json" id="resultContent"></code></pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="copyResult">
+                        <i class="fas fa-copy me-1"></i>复制
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Highlight.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/json.min.js"></script>
     
     <script>
         // 全局变量
@@ -6,6 +509,21 @@
         let userData = JSON.parse(localStorage.getItem('sms_platform_user') || '{}');
         let baseUrl = localStorage.getItem('sms_api_server') || ''; // 默认为空，相对路径
         let isOfflineMode = localStorage.getItem('sms_offline_mode') === 'true'; // 离线模式标志
+        let isRequestInProgress = false; // 防止重复请求
+        const API_VERSION = 'v1'; // API版本
+        
+        // 测试结果数据
+        let testResults = [];
+        
+        // CSRF防护
+        const csrfToken = generateCSRFToken();
+        
+        // 生成CSRF令牌
+        function generateCSRFToken() {
+            // 简单实现，实际应由服务器生成
+            return Math.random().toString(36).substring(2, 15) + 
+                   Math.random().toString(36).substring(2, 15);
+        }
         
         // API列表定义
         const apiList = {
@@ -211,6 +729,144 @@
                         ]}
                     ]
                 }
+            ],
+            admin: [
+                {
+                    name: "获取所有用户列表",
+                    endpoint: "/api/admin/users",
+                    method: "GET",
+                    description: "获取所有用户列表（仅管理员可用）",
+                    params: [
+                        { name: "page", label: "页码", type: "number", value: 1 },
+                        { name: "per_page", label: "每页数量", type: "number", value: 10 },
+                        { name: "keyword", label: "搜索关键词", type: "text" }
+                    ]
+                },
+                {
+                    name: "更新用户状态",
+                    endpoint: "/api/admin/users/{user_id}/status",
+                    method: "GET",
+                    description: "更新指定用户的状态（启用/禁用）",
+                    params: [
+                        { name: "user_id", label: "用户ID", type: "number", required: true, isPathParam: true },
+                        { name: "status", label: "状态", type: "select", required: true, options: [
+                            { value: "active", label: "启用" },
+                            { value: "inactive", label: "禁用" }
+                        ]}
+                    ]
+                },
+                {
+                    name: "设置用户余额",
+                    endpoint: "/api/admin/users/{user_id}/balance",
+                    method: "GET",
+                    description: "为指定用户充值或扣除余额",
+                    params: [
+                        { name: "user_id", label: "用户ID", type: "number", required: true, isPathParam: true },
+                        { name: "amount", label: "金额", type: "number", required: true },
+                        { name: "description", label: "操作说明", type: "text", required: true }
+                    ]
+                },
+                {
+                    name: "添加新项目",
+                    endpoint: "/api/admin/projects",
+                    method: "GET",
+                    description: "添加新的项目",
+                    params: [
+                        { name: "name", label: "项目名称", type: "text", required: true },
+                        { name: "code", label: "项目代码", type: "text", required: true },
+                        { name: "description", label: "项目描述", type: "text", required: true },
+                        { name: "price", label: "价格", type: "number", required: true },
+                        { name: "is_exclusive", label: "是否专属项目", type: "select", options: [
+                            { value: "false", label: "否" },
+                            { value: "true", label: "是" }
+                        ]}
+                    ]
+                },
+                {
+                    name: "更新项目信息",
+                    endpoint: "/api/admin/projects/{project_id}",
+                    method: "GET",
+                    description: "更新指定项目的信息",
+                    params: [
+                        { name: "project_id", label: "项目ID", type: "number", required: true, isPathParam: true },
+                        { name: "name", label: "项目名称", type: "text" },
+                        { name: "description", label: "项目描述", type: "text" },
+                        { name: "price", label: "价格", type: "number" },
+                        { name: "available", label: "是否可用", type: "select", options: [
+                            { value: "", label: "保持不变" },
+                            { value: "true", label: "可用" },
+                            { value: "false", label: "停用" }
+                        ]}
+                    ]
+                },
+                {
+                    name: "系统统计数据",
+                    endpoint: "/api/admin/stats",
+                    method: "GET",
+                    description: "获取系统统计数据",
+                    params: [
+                        { name: "start_date", label: "开始日期", type: "date" },
+                        { name: "end_date", label: "结束日期", type: "date" }
+                    ]
+                },
+                {
+                    name: "号码池状态",
+                    endpoint: "/api/admin/number-pool/status",
+                    method: "GET",
+                    description: "获取号码池状态统计",
+                    params: [
+                        { name: "project_code", label: "项目代码", type: "text" }
+                    ]
+                },
+                {
+                    name: "添加号码到号码池",
+                    endpoint: "/api/admin/number-pool/add",
+                    method: "GET",
+                    description: "向号码池添加新的号码",
+                    params: [
+                        { name: "project_code", label: "项目代码", type: "text", required: true },
+                        { name: "numbers", label: "手机号码列表", type: "text", required: true, placeholder: "多个号码用逗号分隔" },
+                        { name: "source", label: "号码来源", type: "text", required: true }
+                    ]
+                },
+                {
+                    name: "系统日志",
+                    endpoint: "/api/admin/logs",
+                    method: "GET",
+                    description: "获取系统操作日志",
+                    params: [
+                        { name: "page", label: "页码", type: "number", value: 1 },
+                        { name: "per_page", label: "每页数量", type: "number", value: 10 },
+                        { name: "level", label: "日志级别", type: "select", options: [
+                            { value: "", label: "全部" },
+                            { value: "info", label: "信息" },
+                            { value: "warning", label: "警告" },
+                            { value: "error", label: "错误" }
+                        ]},
+                        { name: "start_date", label: "开始日期", type: "date" },
+                        { name: "end_date", label: "结束日期", type: "date" }
+                    ]
+                },
+                {
+                    name: "系统设置",
+                    endpoint: "/api/admin/settings",
+                    method: "GET",
+                    description: "获取或更新系统设置",
+                    params: [
+                        { name: "action", label: "操作", type: "select", required: true, options: [
+                            { value: "get", label: "获取设置" },
+                            { value: "set", label: "更新设置" }
+                        ]},
+                        { name: "key", label: "设置项", type: "select", options: [
+                            { value: "", label: "全部设置" },
+                            { value: "system_name", label: "系统名称" },
+                            { value: "maintenance_mode", label: "维护模式" },
+                            { value: "default_price", label: "默认价格" },
+                            { value: "min_topup", label: "最小充值金额" }
+                        ]},
+                        { name: "value", label: "设置值", type: "text" }
+                    ]
+                }
             ]
         };
         
@@ -231,6 +887,15 @@
                 // 生成API表单
                 generateApiForms();
                 
+                // 更新历史记录UI
+                updateHistoryUI();
+                
+                // 初始化语法高亮
+                hljs.highlightAll();
+                
+                // 检查暗黑模式
+                checkDarkMode();
+                
                 // 隐藏加载指示器
                 hideLoading();
             } catch (e) {
@@ -239,6 +904,83 @@
                 hideLoading();
             }
         });
+        
+        // 检查暗黑模式
+        function checkDarkMode() {
+            const isDarkMode = localStorage.getItem('dark_mode') === 'true';
+            if (isDarkMode) {
+                $('body').addClass('dark-mode');
+                $('#darkModeToggle i').removeClass('fa-moon').addClass('fa-sun');
+            }
+        }
+        
+        // 绑定事件处理程序
+        function bindEvents() {
+            // 登录表单提交
+            $('#loginForm').on('submit', function(e) {
+                e.preventDefault();
+                login();
+            });
+            
+            // 注册表单提交
+            $('#registerForm').on('submit', function(e) {
+                e.preventDefault();
+                register();
+            });
+            
+            // 清除凭证
+            $('#clearToken').on('click', function(e) {
+                e.preventDefault();
+                logout();
+            });
+            
+            // 复制结果
+            $('#copyResult').on('click', function() {
+                copyToClipboard('#resultContent');
+            });
+            
+            // 清空历史记录
+            $('#clearHistory').on('click', function() {
+                clearHistory();
+            });
+            
+            // 运行所有API测试
+            $('#runAllTests').on('click', function() {
+                runAllApiTests();
+            });
+            
+            // 导出测试报告
+            $('#exportReport').on('click', function() {
+                exportTestReport();
+            });
+            
+            // 切换暗黑模式
+            $('#darkModeToggle').on('click', function() {
+                toggleDarkMode();
+            });
+        }
+        
+        // 切换暗黑模式
+        function toggleDarkMode() {
+            const isDarkMode = $('body').hasClass('dark-mode');
+            
+            if (isDarkMode) {
+                // 切换到亮色模式
+                $('body').removeClass('dark-mode');
+                $('#darkModeToggle i').removeClass('fa-sun').addClass('fa-moon');
+                localStorage.setItem('dark_mode', 'false');
+            } else {
+                // 切换到暗黑模式
+                $('body').addClass('dark-mode');
+                $('#darkModeToggle i').removeClass('fa-moon').addClass('fa-sun');
+                localStorage.setItem('dark_mode', 'true');
+            }
+            
+            // 重新应用语法高亮
+            setTimeout(() => {
+                hljs.highlightAll();
+            }, 100);
+        }
         
         // 添加服务器配置功能
         function addServerConfig() {
@@ -413,32 +1155,6 @@
             });
         }
         
-        // 绑定事件处理程序
-        function bindEvents() {
-            // 登录表单提交
-            $('#loginForm').on('submit', function(e) {
-                e.preventDefault();
-                login();
-            });
-            
-            // 注册表单提交
-            $('#registerForm').on('submit', function(e) {
-                e.preventDefault();
-                register();
-            });
-            
-            // 清除凭证
-            $('#clearToken').on('click', function(e) {
-                e.preventDefault();
-                logout();
-            });
-            
-            // 复制结果
-            $('#copyResult').on('click', function() {
-                copyToClipboard('#resultContent');
-            });
-        }
-        
         // 登录函数
         function login() {
             const username = $('#username').val();
@@ -547,6 +1263,25 @@
             
             // 账户管理API
             generateApiCategory('account-apis', '账户管理', apiList.account);
+            
+            // 管理员API（仅当用户是管理员时显示）
+            if (userData && userData.is_admin) {
+                // 添加管理员API面板到页面
+                $('#apiTestPanel .row').append(`
+                    <div class="col-md-12 mb-4">
+                        <div class="card h-100" id="admin-apis">
+                            <div class="card-header bg-danger text-white">
+                                <i class="fas fa-shield-alt me-2"></i>后台管理（管理员专用）
+                            </div>
+                            <div class="card-body">
+                                <div class="accordion" id="admin-apis-accordion">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `);
+                generateApiCategory('admin-apis', '后台管理', apiList.admin);
+            }
         }
         
         // 生成API分类
@@ -618,6 +1353,20 @@
             
             let html = '';
             
+            // 添加HTTP方法选择器
+            html += `
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">HTTP方法</label>
+                    <select class="form-select http-method-selector">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                    <small class="form-text text-muted">选择合适的HTTP方法</small>
+                </div>
+            `;
+            
             params.forEach((param) => {
                 if (param.isPathParam) {
                     // 路径参数使用隐藏字段记录，但显示为普通输入字段
@@ -669,7 +1418,13 @@
             const $form = $(form);
             const formData = new FormData($form[0]);
             const endpoint = formData.get('endpoint');
-            const method = formData.get('method');
+            let method = formData.get('method');
+            
+            // 如果表单中有HTTP方法选择器，使用用户选择的方法
+            const selectedMethod = $form.find('.http-method-selector').val();
+            if (selectedMethod) {
+                method = selectedMethod;
+            }
             
             // 构建参数对象
             const params = {};
@@ -681,8 +1436,8 @@
                 const name = $field.attr('name');
                 const value = $field.val();
                 
-                // 忽略endpoint和method字段
-                if (name === 'endpoint' || name === 'method') {
+                // 忽略endpoint、method和HTTP方法选择器字段
+                if (name === 'endpoint' || name === 'method' || $field.hasClass('http-method-selector')) {
                     return;
                 }
                 
@@ -700,8 +1455,11 @@
                 finalEndpoint = finalEndpoint.replace(`{${param}}`, pathParams[param]);
             });
             
+            // 添加到历史记录
+            addToHistory(method, finalEndpoint, params);
+            
             // 调用API
-            callApi(finalEndpoint, params, function(data) {
+            callApi(finalEndpoint, params, method, function(data) {
                 showResult('请求成功', data);
             }, function(error) {
                 handleApiError(error);
@@ -709,7 +1467,14 @@
         }
         
         // 调用API的通用函数
-        function callApi(endpoint, params, successCallback, errorCallback) {
+        function callApi(endpoint, params, method = 'GET', successCallback, errorCallback) {
+            // 防止重复请求
+            if (isRequestInProgress) {
+                alert('请求正在处理中，请稍后再试');
+                return;
+            }
+            
+            isRequestInProgress = true;
             showLoading();
             
             // 添加token参数
@@ -717,13 +1482,23 @@
                 params.token = userToken;
             }
             
-            console.log('调用API:', endpoint, '参数:', params);
+            // 添加CSRF令牌（非GET请求）
+            if (method !== 'GET') {
+                params._csrf = csrfToken;
+            }
+            
+            // 添加API版本和其他通用参数
+            params.version = API_VERSION;
+            params.client = 'web_tester';
+            
+            console.log('调用API:', endpoint, '方法:', method, '参数:', params);
             
             // 如果是离线模式，使用模拟数据
             if (isOfflineMode) {
                 setTimeout(function() {
                     hideLoading();
-                    const mockResponse = getMockResponse(endpoint, params);
+                    isRequestInProgress = false;
+                    const mockResponse = getMockResponse(endpoint, params, method);
                     console.log('模拟响应:', mockResponse);
                     
                     if (mockResponse.error) {
@@ -742,33 +1517,83 @@
                 return;
             }
             
-            $.ajax({
-                url: baseUrl + endpoint,
-                method: 'GET', // 所有API都支持GET
-                data: params,
+            // 实际API请求
+            // 使用节流处理，防止短时间内多次请求
+            performAPIRequest(endpoint, params, method, successCallback, errorCallback);
+        }
+        
+        // 执行实际的API请求，加入节流处理
+        let requestQueue = [];
+        let isProcessingQueue = false;
+        
+        function performAPIRequest(endpoint, params, method, successCallback, errorCallback) {
+            // 将请求添加到队列
+            requestQueue.push({
+                endpoint, params, method, successCallback, errorCallback
+            });
+            
+            // 如果队列未在处理中，启动处理
+            if (!isProcessingQueue) {
+                processRequestQueue();
+            }
+        }
+        
+        function processRequestQueue() {
+            if (requestQueue.length === 0) {
+                isProcessingQueue = false;
+                return;
+            }
+            
+            isProcessingQueue = true;
+            const request = requestQueue.shift();
+            
+            // 确定请求配置
+            let ajaxConfig = {
+                url: baseUrl + request.endpoint,
+                method: request.method,
                 dataType: 'json',
                 timeout: 10000, // 10秒超时
                 success: function(response) {
                     console.log('API响应成功:', response);
                     hideLoading();
-                    if (successCallback) {
-                        successCallback(response);
+                    isRequestInProgress = false;
+                    
+                    if (request.successCallback) {
+                        request.successCallback(response);
                     }
+                    
+                    // 处理下一个请求
+                    setTimeout(processRequestQueue, 300);
                 },
                 error: function(xhr, status, error) {
                     console.log('API请求失败:', status, error, xhr);
                     hideLoading();
+                    isRequestInProgress = false;
                     
                     // 处理跨域错误
                     if (xhr.status === 0) {
                         alert('可能存在跨域问题，请确保API服务器已开启CORS支持，或者切换到离线测试模式');
                     }
                     
-                    if (errorCallback) {
-                        errorCallback(xhr);
+                    if (request.errorCallback) {
+                        request.errorCallback(xhr);
                     }
+                    
+                    // 处理下一个请求
+                    setTimeout(processRequestQueue, 300);
                 }
-            });
+            };
+            
+            // 根据HTTP方法处理参数
+            if (request.method === 'GET') {
+                ajaxConfig.data = request.params;
+            } else {
+                // 对于非GET请求，将参数转为JSON放在请求体中
+                ajaxConfig.contentType = 'application/json';
+                ajaxConfig.data = JSON.stringify(request.params);
+            }
+            
+            $.ajax(ajaxConfig);
         }
         
         // 处理API错误
@@ -794,21 +1619,76 @@
             $('#resultModalLabel').text(title);
             
             // 设置结果内容
-            $('#resultContent').text(JSON.stringify(data, null, 2));
+            $('#resultContent').text(data);
+            
+            // 应用语法高亮
+            hljs.highlightElement(document.getElementById('resultContent'));
             
             // 显示模态框
             const resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
             resultModal.show();
         }
         
-        // 复制到剪贴板
+        // 复制到剪贴板（安全增强版）
         function copyToClipboard(elementId) {
             const text = $(elementId).text();
-            navigator.clipboard.writeText(text).then(function() {
-                alert('复制成功');
-            }, function() {
-                alert('复制失败，请手动复制');
+            
+            // 检查权限并使用安全复制
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(function() {
+                    showToast('复制成功');
+                }, function(err) {
+                    console.error('复制失败:', err);
+                    showToast('复制失败，请手动复制', 'error');
+                });
+            } else {
+                // 回退方案，使用文本区域选择
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.opacity = 0;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                try {
+                    const successful = document.execCommand('copy');
+                    showToast(successful ? '复制成功' : '复制失败，请手动复制', !successful ? 'error' : 'success');
+                } catch (err) {
+                    console.error('复制失败:', err);
+                    showToast('复制失败，请手动复制', 'error');
+                }
+                
+                document.body.removeChild(textArea);
+            }
+        }
+        
+        // 显示轻量级提示消息
+        function showToast(message, type = 'success') {
+            const toastId = 'toast-' + Date.now();
+            const bgClass = type === 'error' ? 'bg-danger' : 'bg-success';
+            
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center ${bgClass} text-white position-fixed bottom-0 end-0 m-3" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="关闭"></button>
+                    </div>
+                </div>
+            `;
+            
+            $('body').append(toastHtml);
+            const toast = new bootstrap.Toast(document.getElementById(toastId), {
+                delay: 2000
             });
+            toast.show();
+            
+            // 自动删除元素
+            setTimeout(() => {
+                $('#' + toastId).remove();
+            }, 3000);
         }
         
         // 显示加载指示器
@@ -832,7 +1712,7 @@
                 username: "测试用户",
                 email: "test@example.com",
                 balance: 100.0,
-                is_admin: false,
+                is_admin: true, // 默认为管理员便于测试
                 is_active: true,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
@@ -855,7 +1735,7 @@
         }
         
         // 获取模拟响应数据
-        function getMockResponse(endpoint, params) {
+        function getMockResponse(endpoint, params, method = 'GET') {
             // 通用时间戳
             const now = new Date().toISOString();
             
@@ -1099,11 +1979,562 @@
                 };
             }
             
+            // 管理员相关接口
+            if (endpoint === '/api/admin/users') {
+                return {
+                    items: [
+                        {
+                            id: 1,
+                            username: "admin",
+                            email: "admin@example.com",
+                            balance: 1000.0,
+                            is_admin: true,
+                            is_active: true,
+                            created_at: now,
+                            updated_at: now
+                        },
+                        {
+                            id: 2,
+                            username: "user1",
+                            email: "user1@example.com",
+                            balance: 50.0,
+                            is_admin: false,
+                            is_active: true,
+                            created_at: now,
+                            updated_at: now
+                        },
+                        {
+                            id: 3,
+                            username: "user2",
+                            email: "user2@example.com",
+                            balance: 0.0,
+                            is_admin: false,
+                            is_active: false,
+                            created_at: now,
+                            updated_at: now
+                        }
+                    ],
+                    total: 3,
+                    page: parseInt(params.page) || 1,
+                    per_page: parseInt(params.per_page) || 10,
+                    pages: 1
+                };
+            }
+            
+            if (endpoint.includes('/api/admin/users/') && endpoint.includes('/status')) {
+                return {
+                    message: `用户状态已更新为 ${params.status}`,
+                    user_id: parseInt(endpoint.split('/')[3])
+                };
+            }
+            
+            if (endpoint.includes('/api/admin/users/') && endpoint.includes('/balance')) {
+                const userId = parseInt(endpoint.split('/')[3]);
+                const amount = parseFloat(params.amount);
+                return {
+                    message: `用户余额已${amount >= 0 ? '增加' : '减少'} ${Math.abs(amount)} 元`,
+                    user_id: userId,
+                    new_balance: 100 + amount
+                };
+            }
+            
+            if (endpoint === '/api/admin/projects') {
+                return {
+                    message: "项目创建成功",
+                    project: {
+                        id: generateId(),
+                        name: params.name,
+                        code: params.code,
+                        description: params.description,
+                        price: parseFloat(params.price),
+                        success_rate: 0.95,
+                        available: true,
+                        is_exclusive: params.is_exclusive === "true",
+                        created_at: now,
+                        updated_at: now
+                    }
+                };
+            }
+            
+            if (endpoint.includes('/api/admin/projects/')) {
+                return {
+                    message: "项目更新成功",
+                    project_id: parseInt(endpoint.split('/')[3])
+                };
+            }
+            
+            if (endpoint === '/api/admin/stats') {
+                return {
+                    users: {
+                        total: 528,
+                        active: 423,
+                        new_today: 15
+                    },
+                    transactions: {
+                        today_count: 386,
+                        today_amount: 762.5,
+                        total_amount: 153642.75
+                    },
+                    numbers: {
+                        total: 15280,
+                        available: 8475,
+                        used_today: 1245
+                    },
+                    projects: {
+                        total: 25,
+                        active: 20,
+                        most_popular: "微信登录"
+                    },
+                    time_period: {
+                        start_date: params.start_date || "2023-01-01",
+                        end_date: params.end_date || new Date().toISOString().split('T')[0]
+                    }
+                };
+            }
+            
+            if (endpoint === '/api/admin/number-pool/status') {
+                return {
+                    stats: {
+                        total: 15280,
+                        available: 8475,
+                        used: 5321,
+                        blacklisted: 1484
+                    },
+                    project_breakdown: [
+                        { project: "微信登录", available: 3254, used: 2156 },
+                        { project: "支付宝登录", available: 2875, used: 1523 },
+                        { project: "抖音登录", available: 2346, used: 1642 }
+                    ],
+                    usage_trend: [
+                        { date: "2023-05-01", used: 423 },
+                        { date: "2023-05-02", used: 512 },
+                        { date: "2023-05-03", used: 487 }
+                    ]
+                };
+            }
+            
+            if (endpoint === '/api/admin/number-pool/add') {
+                const numberCount = params.numbers.split(',').length;
+                return {
+                    message: `成功添加 ${numberCount} 个号码到项目 ${params.project_code}`,
+                    added: numberCount,
+                    failed: 0,
+                    project_code: params.project_code,
+                    source: params.source
+                };
+            }
+            
+            if (endpoint === '/api/admin/logs') {
+                return {
+                    items: [
+                        {
+                            id: generateId(),
+                            timestamp: now,
+                            level: "info",
+                            message: "用户登录成功",
+                            user_id: 1,
+                            user_name: "admin",
+                            ip: "192.168.1.1"
+                        },
+                        {
+                            id: generateId(),
+                            timestamp: now,
+                            level: "warning",
+                            message: "项目号码池低于阈值",
+                            details: "项目'微信登录'可用号码少于500个",
+                            user_id: null,
+                            user_name: null,
+                            ip: null
+                        },
+                        {
+                            id: generateId(),
+                            timestamp: now,
+                            level: "error",
+                            message: "支付接口连接失败",
+                            details: "支付宝接口连接超时",
+                            user_id: null,
+                            user_name: null,
+                            ip: null
+                        }
+                    ],
+                    total: 3,
+                    page: parseInt(params.page) || 1,
+                    per_page: parseInt(params.per_page) || 10,
+                    pages: 1
+                };
+            }
+            
+            if (endpoint === '/api/admin/settings') {
+                if (params.action === 'get') {
+                    return {
+                        settings: {
+                            system_name: "SMS平台验证码服务",
+                            maintenance_mode: "false",
+                            default_price: "1.0",
+                            min_topup: "10.0",
+                            max_topup: "1000.0",
+                            sms_timeout: "120",
+                            low_balance_alert: "20",
+                            number_pool_threshold: "500"
+                        }
+                    };
+                } else if (params.action === 'set') {
+                    return {
+                        message: `设置项 ${params.key} 已更新为 ${params.value}`,
+                        key: params.key,
+                        value: params.value
+                    };
+                }
+            }
+            
             // 默认返回
             return {
                 error: "未知接口",
                 message: "该接口在离线模式下不可用"
             };
+        }
+        
+        // 添加到历史记录
+        function addToHistory(method, endpoint, params) {
+            // 显示历史面板
+            $('#historyPanel').removeClass('d-none');
+            
+            // 获取历史记录
+            let history = JSON.parse(localStorage.getItem('api_request_history') || '[]');
+            
+            // 添加新记录到开头
+            history.unshift({
+                timestamp: new Date().toISOString(),
+                method: method,
+                endpoint: endpoint,
+                params: params
+            });
+            
+            // 保留最新的30条记录
+            if (history.length > 30) {
+                history = history.slice(0, 30);
+            }
+            
+            // 保存到localStorage
+            localStorage.setItem('api_request_history', JSON.stringify(history));
+            
+            // 更新UI
+            updateHistoryUI();
+        }
+        
+        // 更新历史记录UI
+        function updateHistoryUI() {
+            const history = JSON.parse(localStorage.getItem('api_request_history') || '[]');
+            const $historyContainer = $('#requestHistory');
+            
+            // 清空现有内容
+            $historyContainer.empty();
+            
+            if (history.length === 0) {
+                $historyContainer.html('<p class="text-muted">暂无历史记录</p>');
+                return;
+            }
+            
+            // 添加历史记录项
+            history.forEach((item, index) => {
+                const date = new Date(item.timestamp);
+                const timeStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                const methodBadgeClass = getMethodBadgeClass(item.method);
+                
+                const $historyItem = $(`
+                    <a href="#" class="list-group-item list-group-item-action history-item" data-index="${index}">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <span class="method-badge ${methodBadgeClass}">${item.method}</span>
+                                ${item.endpoint}
+                            </h6>
+                            <small>${timeStr}</small>
+                        </div>
+                        <small class="text-muted">${JSON.stringify(item.params).substring(0, 100)}</small>
+                    </a>
+                `);
+                
+                $historyContainer.append($historyItem);
+            });
+            
+            // 绑定点击事件
+            $('.history-item').on('click', function(e) {
+                e.preventDefault();
+                const index = $(this).data('index');
+                replayRequest(index);
+            });
+        }
+        
+        // 获取方法对应的徽章样式
+        function getMethodBadgeClass(method) {
+            switch (method.toUpperCase()) {
+                case 'GET': return 'get-method';
+                case 'POST': return 'post-method';
+                case 'PUT': return 'put-method';
+                case 'DELETE': return 'delete-method';
+                default: return 'get-method';
+            }
+        }
+        
+        // 重放历史请求
+        function replayRequest(index) {
+            const history = JSON.parse(localStorage.getItem('api_request_history') || '[]');
+            if (index >= history.length) return;
+            
+            const request = history[index];
+            
+            // 调用API
+            callApi(request.endpoint, request.params, request.method, function(data) {
+                showResult('请求成功', data);
+            }, function(error) {
+                handleApiError(error);
+            });
+        }
+        
+        // 清空历史记录
+        function clearHistory() {
+            localStorage.removeItem('api_request_history');
+            updateHistoryUI();
+        }
+        
+        // 运行所有API测试
+        function runAllApiTests() {
+            // 清空测试结果
+            testResults = [];
+            $('#testResultsTable').empty();
+            $('#testReportPanel').removeClass('d-none');
+            
+            // 获取所有API
+            const allApis = [];
+            
+            // 收集各类别下的API
+            Object.keys(apiList).forEach(category => {
+                apiList[category].forEach(api => {
+                    allApis.push({
+                        category,
+                        name: api.name,
+                        endpoint: api.endpoint,
+                        method: api.method,
+                        params: api.params
+                    });
+                });
+            });
+            
+            // 更新UI
+            $('#totalTestCount').text(allApis.length);
+            $('#passedTestCount').text(0);
+            $('#failedTestCount').text(0);
+            $('#avgResponseTime').text('0ms');
+            
+            // 按顺序测试API
+            let currentIndex = 0;
+            const startTime = Date.now();
+            
+            function testNextApi() {
+                if (currentIndex >= allApis.length) {
+                    // 所有测试完成
+                    const totalTime = Date.now() - startTime;
+                    showToast(`测试完成，耗时 ${totalTime}ms`);
+                    updateTestReport();
+                    return;
+                }
+                
+                const api = allApis[currentIndex];
+                const requestParams = {};
+                
+                // 为必填参数生成模拟数据
+                api.params.forEach(param => {
+                    if (param.required) {
+                        // 根据参数类型生成模拟数据
+                        switch (param.type) {
+                            case 'text':
+                                requestParams[param.name] = param.name + '_test';
+                                break;
+                            case 'number':
+                                requestParams[param.name] = 1;
+                                break;
+                            case 'password':
+                                requestParams[param.name] = 'password123';
+                                break;
+                            case 'select':
+                                if (param.options && param.options.length > 0) {
+                                    requestParams[param.name] = param.options[0].value;
+                                }
+                                break;
+                            default:
+                                requestParams[param.name] = 'test_value';
+                        }
+                    }
+                });
+                
+                // 处理路径参数
+                let finalEndpoint = api.endpoint;
+                for (const key in requestParams) {
+                    if (api.endpoint.includes(`{${key}}`)) {
+                        finalEndpoint = finalEndpoint.replace(`{${key}}`, requestParams[key]);
+                        // 移除已处理的路径参数
+                        delete requestParams[key];
+                    }
+                }
+                
+                const apiTestStartTime = Date.now();
+                
+                // 调用API
+                callApi(finalEndpoint, requestParams, api.method, 
+                    // 成功回调
+                    function(response) {
+                        const responseTime = Date.now() - apiTestStartTime;
+                        
+                        // 添加测试结果
+                        testResults.push({
+                            name: api.name,
+                            category: api.category,
+                            endpoint: finalEndpoint,
+                            method: api.method,
+                            params: requestParams,
+                            success: true,
+                            response,
+                            responseTime,
+                            status: 'success'
+                        });
+                        
+                        // 更新测试表格
+                        addTestResultRow(testResults.length - 1);
+                        
+                        // 继续下一个测试
+                        currentIndex++;
+                        setTimeout(testNextApi, 300);
+                    },
+                    // 错误回调
+                    function(error) {
+                        const responseTime = Date.now() - apiTestStartTime;
+                        let errorResponse;
+                        
+                        try {
+                            errorResponse = JSON.parse(error.responseText);
+                        } catch (e) {
+                            errorResponse = { error: error.statusText || '未知错误' };
+                        }
+                        
+                        // 添加测试结果
+                        testResults.push({
+                            name: api.name,
+                            category: api.category,
+                            endpoint: finalEndpoint,
+                            method: api.method,
+                            params: requestParams,
+                            success: false,
+                            response: errorResponse,
+                            responseTime,
+                            status: 'failed',
+                            error: error.status
+                        });
+                        
+                        // 更新测试表格
+                        addTestResultRow(testResults.length - 1);
+                        
+                        // 继续下一个测试
+                        currentIndex++;
+                        setTimeout(testNextApi, 300);
+                    }
+                );
+            }
+            
+            // 开始测试第一个API
+            testNextApi();
+        }
+        
+        // 添加测试结果行
+        function addTestResultRow(resultIndex) {
+            const result = testResults[resultIndex];
+            const methodBadgeClass = getMethodBadgeClass(result.method);
+            const statusClass = result.success ? 'test-result-success' : 'test-result-failed';
+            const statusIcon = result.success ? 'check-circle' : 'times-circle';
+            
+            const row = `
+                <tr>
+                    <td>${result.name}</td>
+                    <td>${result.endpoint}</td>
+                    <td><span class="method-badge ${methodBadgeClass}">${result.method}</span></td>
+                    <td class="${statusClass}"><i class="fas fa-${statusIcon}"></i> ${result.success ? '成功' : '失败'}</td>
+                    <td>${result.responseTime}ms</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary view-result" data-index="${resultIndex}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            
+            $('#testResultsTable').append(row);
+            updateTestReport();
+            
+            // 绑定查看结果事件
+            $(`#testResultsTable .view-result[data-index="${resultIndex}"]`).on('click', function() {
+                const index = $(this).data('index');
+                viewTestResult(index);
+            });
+        }
+        
+        // 更新测试报告统计
+        function updateTestReport() {
+            const passed = testResults.filter(r => r.success).length;
+            const failed = testResults.length - passed;
+            const totalTime = testResults.reduce((sum, r) => sum + r.responseTime, 0);
+            const avgTime = testResults.length > 0 ? Math.round(totalTime / testResults.length) : 0;
+            
+            $('#passedTestCount').text(passed);
+            $('#failedTestCount').text(failed);
+            $('#avgResponseTime').text(`${avgTime}ms`);
+        }
+        
+        // 查看测试结果
+        function viewTestResult(index) {
+            const result = testResults[index];
+            const title = `${result.name} - ${result.success ? '成功' : '失败'}`;
+            const response = JSON.stringify(result.response, null, 2);
+            
+            // 显示结果
+            showResult(title, response);
+        }
+        
+        // 导出测试报告
+        function exportTestReport() {
+            // 创建报告数据
+            const report = {
+                timestamp: new Date().toISOString(),
+                environment: {
+                    server: baseUrl || '本地测试',
+                    offlineMode: isOfflineMode,
+                    apiVersion: API_VERSION
+                },
+                summary: {
+                    total: testResults.length,
+                    passed: testResults.filter(r => r.success).length,
+                    failed: testResults.filter(r => !r.success).length,
+                    avgResponseTime: testResults.length > 0 ? 
+                        Math.round(testResults.reduce((sum, r) => sum + r.responseTime, 0) / testResults.length) : 0
+                },
+                results: testResults.map(r => ({
+                    name: r.name,
+                    endpoint: r.endpoint,
+                    method: r.method,
+                    success: r.success,
+                    responseTime: r.responseTime,
+                    status: r.status
+                }))
+            };
+            
+            // 创建下载链接
+            const dataStr = JSON.stringify(report, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `api-test-report-${new Date().toISOString().slice(0,10)}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
         }
     </script>
 </body>
