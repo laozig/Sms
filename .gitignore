@@ -67,4 +67,13 @@ temp/
 
 # 系统文件
 Thumbs.db
-.DS_Store 
+.DS_Store
+
+# 测试文件
+test_*.py
+*_test.py
+
+# 临时文档
+*_documentation.md
+temp_*.md
+draft_*.md 
