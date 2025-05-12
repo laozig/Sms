@@ -22,6 +22,7 @@ class Notification(db.Model):
     # 关联用户
     user = relationship('User', backref='notifications')
 
+
 # 定义通知设置模型
 class NotificationSettings(db.Model):
     __tablename__ = 'notification_settings'
@@ -346,7 +347,9 @@ def delete_notification(notification_id):
     db.session.delete(notification)
     db.session.commit()
     
+    
     return jsonify({
         'status': 'success',
         'message': '通知已删除'
+
     }) 

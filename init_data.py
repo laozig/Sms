@@ -36,72 +36,84 @@ def init_database():
         print("用户创建完成")
         
         # 创建示例项目
-        projects = [
-            Project(
-                name="微信登录",
-                code="wechat_login",
-                description="微信验证码登录",
-                price=1.0,
-                success_rate=0.98,
-                available=True,
-                is_exclusive=False
-            ),
-            Project(
-                name="支付宝登录",
-                code="alipay_login",
-                description="支付宝验证码登录",
-                price=1.2,
-                success_rate=0.97,
-                available=True,
-                is_exclusive=False
-            ),
-            Project(
-                name="抖音登录",
-                code="douyin_login",
-                description="抖音验证码登录",
-                price=1.5,
-                success_rate=0.96,
-                available=True,
-                is_exclusive=False
-            ),
-            Project(
-                name="京东登录",
-                code="jd_login",
-                description="京东验证码登录",
-                price=1.3,
-                success_rate=0.95,
-                available=True,
-                is_exclusive=False
-            ),
-            Project(
-                name="淘宝登录",
-                code="taobao_login",
-                description="淘宝验证码登录",
-                price=1.3,
-                success_rate=0.94,
-                available=True,
-                is_exclusive=False
-            ),
-            Project(
-                name="银行VIP",
-                code="bank_vip",
-                description="银行VIP专属验证码服务",
-                price=5.0,
-                success_rate=0.99,
-                available=True,
-                is_exclusive=True
-            ),
-            Project(
-                name="电商VIP",
-                code="ecommerce_vip",
-                description="电商VIP专属验证码服务",
-                price=3.0,
-                success_rate=0.98,
-                available=True,
-                is_exclusive=True
-            )
-        ]
-        
+        projects = []
+        project1 = Project(
+            name="微信登录",
+            code="wechat_login",
+            description="微信验证码登录",
+            price=1.0,
+            is_exclusive=False
+        )
+        project1.success_rate = 0.98
+        project1.available = True
+        projects.append(project1)
+
+        project2 = Project(
+            name="支付宝登录",
+            code="alipay_login",
+            description="支付宝验证码登录",
+            price=1.2,
+            is_exclusive=False
+        )
+        project2.success_rate = 0.97
+        project2.available = True
+        projects.append(project2)
+
+        project3 = Project(
+            name="抖音登录",
+            code="douyin_login",
+            description="抖音验证码登录",
+            price=1.5,
+            is_exclusive=False
+        )
+        project3.success_rate = 0.96
+        project3.available = True
+        projects.append(project3)
+
+        project4 = Project(
+            name="京东登录",
+            code="jd_login",
+            description="京东验证码登录",
+            price=1.3,
+            is_exclusive=False
+        )
+        project4.success_rate = 0.95
+        project4.available = True
+        projects.append(project4)
+
+        project5 = Project(
+            name="淘宝登录",
+            code="taobao_login",
+            description="淘宝验证码登录",
+            price=1.3,
+            is_exclusive=False
+        )
+        project5.success_rate = 0.94
+        project5.available = True
+        projects.append(project5)
+
+        project6 = Project(
+            name="银行VIP",
+            code="bank_vip",
+            description="银行VIP专属验证码服务",
+            price=5.0,
+            is_exclusive=True
+        )
+        project6.success_rate = 0.99
+        project6.available = True
+        projects.append(project6)
+
+        project7 = Project(
+            name="电商VIP",
+            code="ecommerce_vip",
+            description="电商VIP专属验证码服务",
+            price=3.0,
+            is_exclusive=True
+        )
+        project7.success_rate = 0.98
+        project7.available = True
+        projects.append(project7)
+
         db.session.add_all(projects)
         db.session.commit()
         

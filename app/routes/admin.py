@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from app.models import db, User, Project, PhoneNumber, Transaction, BlacklistedNumber
 from app.utils import token_required, admin_required
 from sqlalchemy import or_, func
+from datetime import datetime
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -117,18 +118,32 @@ def admin_create_project():
     name = data.get('name')
     code = data.get('code')
     price = data.get('price')
+    is_exclusive = data.get('is_exclusive', False)
+    
     if not name or not code or price is None:
         return jsonify({'message': '缺少必要参数'}), 400
     if Project.query.filter_by(code=code).first():
         return jsonify({'message': '项目代码已存在'}), 400
-    project = Project(name=name, code=code, price=price)
-    project.description = data.get('description', '')
+    
+    # 创建项目，自动生成项目ID和专属项目ID（如果是专属项目）
+    project = Project(
+        name=name, 
+        code=code, 
+        price=price,
+        description=data.get('description', ''),
+        is_exclusive=is_exclusive
+    )
+    
     project.success_rate = data.get('success_rate', 0.0)
     project.available = data.get('available', True)
-    project.is_exclusive = data.get('is_exclusive', False)
+    
     db.session.add(project)
     db.session.commit()
-    return jsonify({'message': '项目创建成功', 'project': project.to_dict()}), 201
+    
+    return jsonify({
+        'message': '项目创建成功', 
+        'project': project.to_dict()
+    }), 201
 
 # 修改项目
 @admin_bp.route('/projects/<int:project_id>', methods=['PUT'])
@@ -138,6 +153,7 @@ def admin_update_project(project_id):
     project = Project.query.get(project_id)
     if not project:
         return jsonify({'message': '项目不存在'}), 404
+    
     data = request.get_json() or {}
     project.name = data.get('name', project.name)
     project.code = data.get('code', project.code)
@@ -145,7 +161,12 @@ def admin_update_project(project_id):
     project.description = data.get('description', project.description)
     project.success_rate = data.get('success_rate', project.success_rate)
     project.available = data.get('available', project.available)
-    project.is_exclusive = data.get('is_exclusive', project.is_exclusive)
+    
+    # 检查专属项目状态是否改变
+    if 'is_exclusive' in data and data['is_exclusive'] != project.is_exclusive:
+        # 使用自定义方法处理专属项目ID的变更
+        project.set_exclusive(data['is_exclusive'])
+    
     db.session.commit()
     return jsonify({'message': '项目信息已更新', 'project': project.to_dict()})
 
@@ -320,4 +341,75 @@ def admin_statistics():
         'total_balance': total_balance,
         'total_income': total_income,
         'total_consume': abs(total_consume)
-    }) 
+    })
+
+# 操作日志管理
+class AdminLog(db.Model):
+    __tablename__ = 'admin_logs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    level = db.Column(db.String(20), default='info')  # info, warning, error, debug
+    content = db.Column(db.Text, nullable=False)
+    ip_address = db.Column(db.String(50), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    
+    # 关联用户
+    user = db.relationship('User', backref='admin_logs')
+
+@admin_bp.route('/logs', methods=['GET'])
+@token_required
+@admin_required
+def admin_get_logs():
+    page = int(request.args.get('page', 1))
+    per_page = min(int(request.args.get('per_page', 20)), 100)
+    
+    query = AdminLog.query
+    pagination = query.order_by(AdminLog.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    
+    logs = []
+    for log in pagination.items:
+        user_info = None
+        if log.user:
+            user_info = {
+                'id': log.user.id,
+                'username': log.user.username
+            }
+        
+        logs.append({
+            'id': log.id,
+            'level': log.level,
+            'content': log.content,
+            'ip_address': log.ip_address,
+            'user': user_info,
+            'created_at': log.created_at.isoformat()
+        })
+    
+    return jsonify({
+        'items': logs,
+        'total': pagination.total,
+        'pages': pagination.pages,
+        'page': page,
+        'per_page': per_page
+    })
+
+@admin_bp.route('/logs', methods=['POST'])
+@token_required
+@admin_required
+def admin_create_log():
+    data = request.get_json() or {}
+    
+    if 'content' not in data:
+        return jsonify({'message': '缺少必要参数'}), 400
+    
+    log = AdminLog(
+        content=data['content'],
+        level=data.get('level', 'info'),
+        user_id=request.user_id,
+        ip_address=request.remote_addr
+    )
+    
+    db.session.add(log)
+    db.session.commit()
+    
+    return jsonify({'message': '日志创建成功', 'log_id': log.id}), 201 

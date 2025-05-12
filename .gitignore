@@ -7,6 +7,8 @@ env/
 # Python缓存文件
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
 *$py.class
 *.so
 .Python
@@ -59,6 +61,8 @@ coverage.xml
 *.tmp
 .temp/
 temp/
+test_output.txt
+test_results.txt
 
 # 备份文件
 *.bak
@@ -72,8 +76,36 @@ Thumbs.db
 # 测试文件
 test_*.py
 *_test.py
+*_validation.py
+mock_*.py
+run_tests.bat
+performance_test.py
+*_apis.py
+client_*.py
+simple_*.py
+quick_*.py
+error_test.py
+full_*_test.py
+admin_test.py
+complete_test.py
 
 # 临时文档
 *_documentation.md
+*_documentation.html
 temp_*.md
-draft_*.md 
+draft_*.md
+test_*.md
+test_*.html
+*_summary.md
+*测试*.md
+API测试说明.md
+
+# 其他
+API文档.md
+api_test.html
+
+# 编辑器/IDE
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project 

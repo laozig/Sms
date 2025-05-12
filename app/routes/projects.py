@@ -380,6 +380,9 @@ def get_project_detail(project_id):
     user_id = request.user_id
     is_admin = request.is_admin
     
+    # 初始化user_exclusive变量
+    user_exclusive = None
+    
     if project.is_exclusive and not is_admin:
         # 检查用户是否已加入该专属项目
         user_exclusive = UserExclusiveProject.query.filter_by(
@@ -451,4 +454,203 @@ def get_project_detail(project_id):
     return jsonify({
         'message': '获取项目详情成功',
         'project': project_data
-    }), 200 
+    }), 200
+
+
+@projects_bp.route('/batch-favorite', methods=['GET', 'POST'])
+@token_required
+def batch_favorite_projects():
+    """
+    批量收藏/取消收藏项目
+    
+    参数:
+        token: 认证令牌
+        project_ids: 项目ID列表，用逗号分隔
+        action: 动作（可选，默认为添加收藏，值为"delete"表示取消收藏）
+    
+    返回:
+        操作结果
+    """
+    # 从request中获取当前用户ID
+    current_user_id = request.user_id
+    
+    # 获取请求参数
+    project_ids_str = request.args.get('project_ids', '') or request.form.get('project_ids', '')
+    action = request.args.get('action', '') or request.form.get('action', '')
+    
+    if not project_ids_str:
+        return jsonify({
+            'status': 'error',
+            'message': '请提供项目ID列表'
+        }), 400
+    
+    # 解析项目ID列表
+    try:
+        project_ids = [int(pid.strip()) for pid in project_ids_str.split(',') if pid.strip()]
+    except ValueError:
+        return jsonify({
+            'status': 'error',
+            'message': '项目ID必须为整数'
+        }), 400
+    
+    if not project_ids:
+        return jsonify({
+            'status': 'error',
+            'message': '无效的项目ID列表'
+        }), 400
+    
+    # 限制批量操作数量
+    if len(project_ids) > 20:
+        return jsonify({
+            'status': 'error',
+            'message': '一次最多操作20个项目'
+        }), 400
+    
+    # 批量处理收藏/取消收藏
+    results = {}
+    for project_id in project_ids:
+        # 查询项目
+        project = Project.query.get(project_id)
+        
+        if not project:
+            results[project_id] = {
+                'status': 'error',
+                'message': '项目不存在'
+            }
+            continue
+        
+        # 查询是否已收藏
+        favorite = UserFavorite.query.filter_by(
+            user_id=current_user_id,
+            project_id=project_id
+        ).first()
+        
+        # 执行收藏/取消收藏操作
+        if action.lower() == 'delete':
+            # 取消收藏
+            if favorite:
+                db.session.delete(favorite)
+                results[project_id] = {
+                    'status': 'success',
+                    'message': '已取消收藏'
+                }
+            else:
+                results[project_id] = {
+                    'status': 'warning',
+                    'message': '项目未收藏'
+                }
+        else:
+            # 添加收藏
+            if favorite:
+                results[project_id] = {
+                    'status': 'warning',
+                    'message': '项目已收藏'
+                }
+            else:
+                new_favorite = UserFavorite(
+                    user_id=current_user_id,
+                    project_id=project_id
+                )
+                db.session.add(new_favorite)
+                results[project_id] = {
+                    'status': 'success',
+                    'message': '收藏成功'
+                }
+    
+    # 提交数据库事务
+    db.session.commit()
+    
+    return jsonify({
+        'status': 'success',
+        'results': results
+    })
+
+
+@projects_bp.route('/by-project-id/<string:project_id>', methods=['GET', 'POST'])
+@token_required
+def get_project_by_project_id(project_id):
+    """
+    通过项目ID(5位数字)查询项目信息
+    
+    URL参数:
+        project_id: 5位数字项目ID
+    
+    返回:
+        成功: {'message': '获取项目详情成功', 'project': 项目详细信息}
+        失败: {'message': '错误信息'}, 错误状态码
+    """
+    # 查询项目
+    project = Project.query.filter_by(project_id=project_id).first()
+    
+    if not project:
+        return jsonify({'message': f'项目不存在: {project_id}'}), 404
+    
+    # 复用项目详情API的逻辑
+    return get_project_detail(project.id)
+
+
+@projects_bp.route('/by-exclusive-id/<string:exclusive_id>', methods=['GET', 'POST'])
+@token_required
+def get_project_by_exclusive_id(exclusive_id):
+    """
+    通过专属项目ID查询项目信息
+    
+    URL参数:
+        exclusive_id: 专属项目ID (格式：XXXXX----xxxxxxxx)
+    
+    返回:
+        成功: {'message': '获取项目详情成功', 'project': 项目详细信息}
+        失败: {'message': '错误信息'}, 错误状态码
+    """
+    # 查询项目
+    project = Project.query.filter_by(exclusive_id=exclusive_id).first()
+    
+    if not project:
+        return jsonify({'message': f'专属项目不存在: {exclusive_id}'}), 404
+    
+    # 复用项目详情API的逻辑
+    return get_project_detail(project.id)
+
+
+@projects_bp.route('/exclusive/<int:project_id>/cancel', methods=['GET', 'POST'])
+@token_required
+def cancel_exclusive(project_id):
+    """
+    取消专属对接
+    
+    URL参数:
+        project_id: 项目ID
+    
+    返回:
+        成功: {'message': '取消专属对接成功'}
+        失败: {'message': '错误信息'}, 错误状态码
+    """
+    # 检查项目是否存在
+    project = Project.query.get(project_id)
+    if not project:
+        return jsonify({'message': '项目不存在'}), 404
+    
+    # 检查项目是否为专属项目
+    if not project.is_exclusive:
+        return jsonify({'message': '非专属对接项目'}), 400
+    
+    try:
+        # 查找现有专属对接记录
+        exclusive = UserExclusiveProject.query.filter_by(
+            user_id=request.user_id,
+            project_id=project_id
+        ).first()
+        
+        if not exclusive:
+            # 如果没有找到对接记录，返回提示
+            return jsonify({'message': '您未加入此专属对接'}), 400
+        
+        # 删除专属对接记录
+        db.session.delete(exclusive)
+        db.session.commit()
+        
+        return jsonify({'message': '取消专属对接成功'}), 200
+        
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({'message': f'取消专属对接失败: {str(e)}'}), 500 

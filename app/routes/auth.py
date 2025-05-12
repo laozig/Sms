@@ -299,6 +299,7 @@ def update_profile():
             # 检查邮箱是否已被其他用户使用
             existing_user = User.query.filter_by(email=email).first()
             if existing_user and existing_user.id != user.id:
+                print(f"该邮箱已被其他用户注册: {email}")
                 return jsonify({'message': '该邮箱已被其他用户注册'}), 409
             
             user.email = email

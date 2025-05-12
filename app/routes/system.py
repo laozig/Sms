@@ -18,6 +18,18 @@ API_METRICS = {
     'endpoints': {}
 }
 
+# 系统设置
+SYSTEM_SETTINGS = {
+    'system_name': '接码平台',
+    'maintenance_mode': False,
+    'default_price': 1.0,
+    'min_topup': 10.0,
+    'max_topup': 5000.0,
+    'sms_timeout': 120,
+    'low_balance_alert': 5.0,
+    'number_pool_threshold': 100
+}
+
 @system_bp.before_request
 def before_request():
     """记录API请求"""
@@ -130,7 +142,7 @@ def api_metrics():
 @system_bp.route('/reset-metrics', methods=['POST'])
 @token_required
 @admin_required
-def reset_metrics(current_user):
+def reset_metrics():
     """
     重置API指标统计
     
@@ -163,4 +175,37 @@ def get_languages():
     
     return jsonify({
         'languages': languages
+    })
+
+@system_bp.route('/settings', methods=['GET'])
+@token_required
+@admin_required
+def get_settings():
+    """
+    获取系统设置
+    
+    仅管理员可用
+    """
+    return jsonify(SYSTEM_SETTINGS)
+
+@system_bp.route('/settings', methods=['POST'])
+@token_required
+@admin_required
+def update_settings():
+    """
+    更新系统设置
+    
+    仅管理员可用
+    """
+    data = request.get_json() or {}
+    
+    # 更新系统设置
+    for key in SYSTEM_SETTINGS:
+        if key in data:
+            SYSTEM_SETTINGS[key] = data[key]
+    
+    return jsonify({
+        'status': 'success',
+        'message': '系统设置已更新',
+        'settings': SYSTEM_SETTINGS
     }) 

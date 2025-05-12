@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app, send_file
 from datetime import datetime, timedelta
-from app.models import db, PhoneNumber, Project, User, BlacklistedNumber, Transaction
+from app.models import db, PhoneNumber, Project, User, BlacklistedNumber, Transaction, PhoneRequest, SMS
 from app.utils import token_required, admin_required, SMSApiClient, calculate_price, validate_pagination_params
 from sqlalchemy import desc, func
 import uuid
@@ -11,6 +11,36 @@ import csv
 import json
 import io
 import pandas as pd
+import re
+
+# 定义验证码提取函数
+def extract_verification_code(content):
+    """
+    从短信内容中提取验证码
+    
+    参数:
+        content: 短信内容
+        
+    返回:
+        提取出的验证码，如果未找到则返回空字符串
+    """
+    # 常见的验证码模式
+    patterns = [
+        r'验证码[是为:]?\s*([0-9]{4,6})',  # 验证码是123456
+        r'code[: ]([0-9]{4,6})',  # code: 123456
+        r'码[是为:]?\s*([0-9]{4,6})',  # 码是123456
+        r'[验证认证校验].*?([0-9]{4,6})',  # 您的验证码123456
+        r'([0-9]{4,6})[^0-9]*验证',  # 123456是您的验证码
+        r'([0-9]{6})',  # 直接匹配6位数字
+        r'([0-9]{4})'   # 直接匹配4位数字
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, content)
+        if match:
+            return match.group(1)
+    
+    return ""
 
 # 创建蓝图
 numbers_bp = Blueprint('numbers', __name__)
@@ -859,4 +889,103 @@ def export_numbers():
                 'data': excel_base64
             }), 200
         except Exception as e:
-            return jsonify({'message': f'导出Excel失败: {str(e)}'}), 500 
+            return jsonify({'message': f'导出Excel失败: {str(e)}'}), 500
+
+
+@numbers_bp.route('/batch-sms', methods=['GET', 'POST'])
+@token_required
+def batch_get_sms():
+    """
+    批量获取短信
+    
+    参数:
+        token: 认证令牌
+        request_ids: 请求ID列表，用逗号分隔
+    
+    返回:
+        多个请求ID对应的短信信息
+    """
+    # 从request中获取当前用户ID
+    current_user_id = request.user_id
+    
+    # 获取请求参数
+    request_ids_str = request.args.get('request_ids', '') or request.form.get('request_ids', '')
+    
+    if not request_ids_str:
+        return jsonify({
+            'status': 'error',
+            'message': '请提供请求ID列表'
+        }), 400
+    
+    # 解析请求ID列表
+    request_ids = [req_id.strip() for req_id in request_ids_str.split(',') if req_id.strip()]
+    
+    if not request_ids:
+        return jsonify({
+            'status': 'error',
+            'message': '无效的请求ID列表'
+        }), 400
+    
+    # 限制批量查询数量
+    if len(request_ids) > 10:
+        return jsonify({
+            'status': 'error',
+            'message': '一次最多查询10个请求ID的短信'
+        }), 400
+    
+    # 查询所有请求ID对应的短信
+    results = {}
+    for request_id in request_ids:
+        # 查询号码请求
+        phone_request = PhoneRequest.query.filter_by(request_id=request_id).first()
+        
+        if not phone_request:
+            results[request_id] = {
+                'status': 'error',
+                'message': '请求ID不存在'
+            }
+            continue
+        
+        # 检查权限（只能查询自己的号码）
+        if phone_request.user_id != current_user_id:
+            results[request_id] = {
+                'status': 'error',
+                'message': '无权查询此请求ID'
+            }
+            continue
+        
+        # 检查号码状态
+        if phone_request.status not in ['active', 'used']:
+            results[request_id] = {
+                'status': 'error',
+                'message': f'号码状态不正确: {phone_request.status}'
+            }
+            continue
+        
+        # 查询短信
+        sms = SMS.query.filter_by(phone_request_id=phone_request.id).order_by(SMS.received_at.desc()).first()
+        
+        if not sms:
+            results[request_id] = {
+                'status': 'waiting',
+                'message': '暂无短信，请稍后再试'
+            }
+            continue
+        
+        # 返回短信信息
+        results[request_id] = {
+            'status': 'success',
+            'phone_number': phone_request.phone_number,
+            'sms': {
+                'id': sms.id,
+                'sender': sms.sender,
+                'content': sms.content,
+                'received_at': sms.received_at.isoformat(),
+                'code': extract_verification_code(sms.content)
+            }
+        }
+    
+    return jsonify({
+        'status': 'success',
+        'results': results
+    }) 
